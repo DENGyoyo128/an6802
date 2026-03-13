@@ -1,7 +1,13 @@
 from flask import Flask,render_template,request
 import joblib
+import os
+from groq import Groq
+
+# os.environ["GROQ_API_KEY"]=""
 
 model=joblib.load("foodexp.pkl")
+
+client=Groq()
 
 app=Flask(__name__)
 
@@ -36,6 +42,34 @@ def foodExp():
     r=model.predict([[q]])
     return(render_template("foodExp.html",r=r[0][0]))
 
+@app.route("/chatbot",methods=["GET","POST"])
+def chatbot():
+    return(render_template("chatbot.html"))
+
+@app.route("/roe",methods=["GET","POST"])
+def roe():
+    r = client.chat.completions.create(
+        model = "llama-3.1-8b-instant",
+        messages = [
+        {"role": "system", "content": "Please explain ROE in 20 words"}
+        ]
+    )
+    return(render_template("roe.html",r=r.choices[0].message.content))
+
+@app.route("/generalQuestion",methods=["GET","POST"])
+def generalQuestion():
+    return(render_template("generalQuestion.html"))
+
+@app.route("/groqReply",methods=["GET","POST"])
+def groqReply():
+    q=request.form.get("q")
+    r=client.chat.completions.create(
+        model = "llama-3.1-8b-instant",
+        messages = [
+        {"role": "system", "content":q}
+        ]
+    )
+    return(render_template("groqReply.html",r=r.choices[0].message.content))
 
 if __name__=="__main__":
     app.run()
